@@ -1,82 +1,116 @@
+"""AudysseyProcessor
+
+Usage:
+  AudysseyProcessor.py --inputFile=<inputPath> --outputFile=<outputPath>
+
+Options:
+  --inputFile=<inputPath>   The path to the input file to be processed. Will not be modified.
+  --outputFile=<outputPath> The path to the processed output file. Path will be created if necessary.
+  -h --help     Show this screen.
+  --version     Show version.
+
+"""
+
 import json
-import math
+from datetime import datetime
+from os import path, makedirs
 
-from os import path
-
-inputFile = r"C:\Users\s0546\Downloads\3P_180_1.ady"
-outputFileName = r"3P_180_1_Edit3"
+from docopt import docopt
 
 
 class AudysseyProcessor:
-    class channelInfo:
-        def __init__(self, crossover=None, level=None, corrections=None, midrangeComp=None):
+    class ChannelInfo:
+        def __init__(self, crossover=None, level=None, corrections=None, midrange_comp=None):
             self.crossover = crossover
             self.level = level
             self.corrections = corrections
-            self.midrangeComp = midrangeComp
+            self.midrange_comp = midrange_comp
 
-    def createChannelData(self):
+    @staticmethod
+    def create_channel_data():
         channels = {}
 
         # insert channel data here
-        correctionsFront = ["{20.0, 9.5}", "{150.0, -1.0}", "{500.0, 0.0}", "{2500.0, -5.0}", "{3600.0, -2.0}",
-                            "{6200.0, -3.0}", "{11000.0, 0.0}", "{15000.0, -2.0}"]
+        corrections_front = ["{20.0, 9.5}", "{150.0, -1.0}", "{500.0, 0.0}", "{2500.0, -5.0}", "{3600.0, -2.0}",
+                             "{6200.0, -3.0}", "{11000.0, 0.0}", "{15000.0, -2.0}"]
 
-        correctionsCenter = ["{20.0, 0.0}", "{100.0, 0.0}", "{170.0, -0.5}", "{295.0, 1.5}",
-                             "{570.0, -4.0}", "{2040.0, -4.0}", "{3565.00, -3.5}", "{6725.0, -7.0}",
-                             "{10850.0, 0.0}", "{15485.0, -3.5}"]
+        corrections_center = ["{20.0, 0.0}", "{100.0, 0.0}", "{170.0, -0.5}", "{295.0, 1.5}",
+                              "{570.0, -4.0}", "{2040.0, -4.0}", "{3565.00, -3.5}", "{6725.0, -7.0}",
+                              "{10850.0, 0.0}", "{15485.0, -3.5}"]
 
-        correctionsRear = ["{20.0, 0.0}", "{100.0, 5.0}", "{200.0, 2.0}", "{400.0, 0.0}", "{650.0, 0.5}",
-                         "{1500.0, -0.5}", "{4000.0, 0.0}", "{7000.0, -4.0}", "{12000.0, -0.5}", "{20000.0, 0.0}"]
-
-        correctionsSL = ["{20.0, 0.0}", "{100.0, 5.0}", "{250.0, -2.5}", "{650.0, -2.0}",
-                         "{1000.0, -3.0}", "{4000.0, 0.0}", "{7000.0, -4.0}", "{12000.0, -0.5}", "{20000.0, 0.0}"]
+        corrections_rear = ["{20.0, 0.0}", "{100.0, 5.0}", "{200.0, 2.0}", "{400.0, 0.0}", "{650.0, 0.5}",
+                            "{1500.0, -0.5}", "{4000.0, 0.0}", "{7000.0, -4.0}", "{12000.0, -0.5}", "{20000.0, 0.0}"]
 
         # channel assembly
-        channels["FL"] = AudysseyProcessor.channelInfo(crossover=80, midrangeComp=False, corrections=correctionsFront)
-        channels["FR"] = AudysseyProcessor.channelInfo(crossover=80, midrangeComp=False, corrections=correctionsFront)
-        channels["C"] = AudysseyProcessor.channelInfo(crossover=80, corrections=correctionsCenter)
-        channels["SRA"] = AudysseyProcessor.channelInfo(crossover=80, corrections=correctionsRear)
-        channels["SLA"] = AudysseyProcessor.channelInfo(crossover=80, corrections=correctionsRear)
-        channels["SW1"] = AudysseyProcessor.channelInfo(level=3.0)
+        channels["FL"] = AudysseyProcessor.ChannelInfo(crossover=80, midrange_comp=False, corrections=corrections_front)
+        channels["FR"] = AudysseyProcessor.ChannelInfo(crossover=80, midrange_comp=False, corrections=corrections_front)
+        channels["C"] = AudysseyProcessor.ChannelInfo(crossover=80, corrections=corrections_center)
+        channels["SRA"] = AudysseyProcessor.ChannelInfo(crossover=80, corrections=corrections_rear)
+        channels["SLA"] = AudysseyProcessor.ChannelInfo(crossover=80, corrections=corrections_rear)
+        channels["SW1"] = AudysseyProcessor.ChannelInfo(level=3.0)
 
         return channels
 
-    def run(self, inputFile, outputFileName):
-        inputPath = path.dirname(inputFile)
-        outputFile = path.join(inputPath, outputFileName + ".ady")
+    def run(self, input_file_path, output_file_path):
+        start_time = datetime.now()
 
-        modChannels = self.createChannelData()
+        # extract input filename for printing
+        input_file_name = path.splitext(path.basename(input_file_path))[0]
+
+        # extract output filename and path
+        output_file_name = path.splitext(path.basename(output_file_path))[0]
+        output_dir_path = path.dirname(output_file_path)
+
+        # recursively create output path if required
+        makedirs(output_dir_path, exist_ok=True)
+
+        # inform user
+        print("Replacing values from {0} and writing a formatted version to {1}...".format(input_file_name,
+                                                                                           output_file_name))
+
+        mod_channels = self.create_channel_data()
 
         # read
-        with open(inputFile) as input:
-            data = json.load(input)
+        with open(input_file_path) as infile:
+            data = json.load(infile)
 
         # process
-        data["title"] = outputFileName
-        for inputChannel in data["detectedChannels"]:
-            channelId = inputChannel["commandId"]
-            if channelId in modChannels:
-                modData = modChannels[channelId]
+        data["title"] = output_file_name
+        for input_channel in data["detectedChannels"]:
+            channel_id = input_channel["commandId"]
+            if channel_id in mod_channels:
+                mod_data = mod_channels[channel_id]
 
-                if modData.corrections is not None:
-                    inputChannel["customTargetCurvePoints"] = modData.corrections
+                if mod_data.corrections is not None:
+                    input_channel["customTargetCurvePoints"] = mod_data.corrections
 
-                if modData.level is not None:
-                    inputChannel["customLevel"] = str(modData.level)
+                if mod_data.level is not None:
+                    input_channel["customLevel"] = str(mod_data.level)
 
-                if modData.crossover is not None:
-                    inputChannel["customCrossover"] = str(modData.crossover)
-                    inputChannel["customSpeakerType"] = 'S'
+                if mod_data.crossover is not None:
+                    input_channel["customCrossover"] = str(mod_data.crossover)
+                    input_channel["customSpeakerType"] = 'S'
 
-                if modData.midrangeComp is not None:
-                    inputChannel["midrangeCompensation"] = str(modData.midrangeComp)
+                if mod_data.midrange_comp is not None:
+                    input_channel["midrangeCompensation"] = str(mod_data.midrange_comp)
 
         # write
-        with open(outputFile, "w+") as output:
+        with open(output_file_path, "w+") as output:
             json.dump(obj=data, fp=output, indent='\t')
+
+        # inform user
+        end_time = datetime.now()
+        print("Finished processing in {0:.2f} s.".format((end_time - start_time).total_seconds()))
+
+
+def get_args():
+    arguments = docopt(__doc__)
+    input_file = arguments["--inputFile"]
+    output_file = arguments["--outputFile"]
+    return input_file, output_file
 
 
 if __name__ == '__main__':
     instance = AudysseyProcessor()
-    instance.run(inputFile, outputFileName)
+    args = get_args()
+    instance.run(input_file_path=args[0], output_file_path=args[1])
