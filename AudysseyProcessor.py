@@ -1,14 +1,24 @@
+"""AudysseyProcessor
+
+Usage:
+  AudysseyProcessor.py --inputFile=<inputPath> --outputFile=<outputPath>
+
+Options:
+  --inputFile=<inputPath>   The path to the input file to be processed. Will not be modified.
+  --outputFile=<outputPath> The path to the processed output file. Path will be created if necessary.
+  -h --help     Show this screen.
+  --version     Show version.
+
+"""
+
 import json
-import math
+from docopt import docopt
 
 from os import path
 
-inputFile = r"C:\Users\s0546\Downloads\3P_180_1.ady"
-outputFileName = r"3P_180_1_Edit3"
-
 
 class AudysseyProcessor:
-    class channelInfo:
+    class ChannelInfo:
         def __init__(self, crossover=None, level=None, corrections=None, midrangeComp=None):
             self.crossover = crossover
             self.level = level
@@ -27,18 +37,18 @@ class AudysseyProcessor:
                              "{10850.0, 0.0}", "{15485.0, -3.5}"]
 
         correctionsRear = ["{20.0, 0.0}", "{100.0, 5.0}", "{200.0, 2.0}", "{400.0, 0.0}", "{650.0, 0.5}",
-                         "{1500.0, -0.5}", "{4000.0, 0.0}", "{7000.0, -4.0}", "{12000.0, -0.5}", "{20000.0, 0.0}"]
+                           "{1500.0, -0.5}", "{4000.0, 0.0}", "{7000.0, -4.0}", "{12000.0, -0.5}", "{20000.0, 0.0}"]
 
         correctionsSL = ["{20.0, 0.0}", "{100.0, 5.0}", "{250.0, -2.5}", "{650.0, -2.0}",
                          "{1000.0, -3.0}", "{4000.0, 0.0}", "{7000.0, -4.0}", "{12000.0, -0.5}", "{20000.0, 0.0}"]
 
         # channel assembly
-        channels["FL"] = AudysseyProcessor.channelInfo(crossover=80, midrangeComp=False, corrections=correctionsFront)
-        channels["FR"] = AudysseyProcessor.channelInfo(crossover=80, midrangeComp=False, corrections=correctionsFront)
-        channels["C"] = AudysseyProcessor.channelInfo(crossover=80, corrections=correctionsCenter)
-        channels["SRA"] = AudysseyProcessor.channelInfo(crossover=80, corrections=correctionsRear)
-        channels["SLA"] = AudysseyProcessor.channelInfo(crossover=80, corrections=correctionsRear)
-        channels["SW1"] = AudysseyProcessor.channelInfo(level=3.0)
+        channels["FL"] = AudysseyProcessor.ChannelInfo(crossover=80, midrangeComp=False, corrections=correctionsFront)
+        channels["FR"] = AudysseyProcessor.ChannelInfo(crossover=80, midrangeComp=False, corrections=correctionsFront)
+        channels["C"] = AudysseyProcessor.ChannelInfo(crossover=80, corrections=correctionsCenter)
+        channels["SRA"] = AudysseyProcessor.ChannelInfo(crossover=80, corrections=correctionsRear)
+        channels["SLA"] = AudysseyProcessor.ChannelInfo(crossover=80, corrections=correctionsRear)
+        channels["SW1"] = AudysseyProcessor.ChannelInfo(level=3.0)
 
         return channels
 
@@ -77,6 +87,14 @@ class AudysseyProcessor:
             json.dump(obj=data, fp=output, indent='\t')
 
 
+def get_args():
+    arguments = docopt(__doc__)
+    input_file = arguments["inputPath"]
+    output_file = arguments["outputPath"]
+    return (input_file, output_file)
+
+
 if __name__ == '__main__':
     instance = AudysseyProcessor()
-    instance.run(inputFile, outputFileName)
+    args = get_args()
+    instance.run(inputFile=args[0], outputFileName=args[1])
