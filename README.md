@@ -16,4 +16,5 @@ AudysseyProcessor[]().py --inputFile=<inputPath> --outputFile=<outputPath>
 No error checking is performed.
 
 ## TODO
-* optional argument: disable tabs 
+* optional argument: disable tabs
+* add correction cutoff frequency
