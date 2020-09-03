@@ -20,11 +20,12 @@ from docopt import docopt
 
 class AudysseyProcessor:
     class ChannelInfo:
-        def __init__(self, crossover=None, level=None, corrections=None, midrange_comp=None):
+        def __init__(self, crossover=None, level=None, corrections=None, midrange_comp=None, correction_limit=None):
             self.crossover = crossover
             self.level = level
             self.corrections = corrections
             self.midrange_comp = midrange_comp
+            self.correction_limit = correction_limit
 
     @staticmethod
     def create_channel_data():
@@ -42,11 +43,16 @@ class AudysseyProcessor:
                             "{1500.0, -0.5}", "{4000.0, 0.0}", "{7000.0, -4.0}", "{12000.0, -0.5}", "{20000.0, 0.0}"]
 
         # channel assembly
-        channels["FL"] = AudysseyProcessor.ChannelInfo(crossover=80, midrange_comp=False, corrections=corrections_front)
-        channels["FR"] = AudysseyProcessor.ChannelInfo(crossover=80, midrange_comp=False, corrections=corrections_front)
-        channels["C"] = AudysseyProcessor.ChannelInfo(crossover=80, corrections=corrections_center)
-        channels["SRA"] = AudysseyProcessor.ChannelInfo(crossover=80, corrections=corrections_rear)
-        channels["SLA"] = AudysseyProcessor.ChannelInfo(crossover=80, corrections=corrections_rear)
+        channels["FL"] = AudysseyProcessor.ChannelInfo(crossover=80, midrange_comp=False,
+                                                       corrections=corrections_front, correction_limit=1000)
+        channels["FR"] = AudysseyProcessor.ChannelInfo(crossover=80, midrange_comp=False,
+                                                       corrections=corrections_front, correction_limit=1000)
+        channels["C"] = AudysseyProcessor.ChannelInfo(crossover=80,
+                                                      corrections=corrections_center, correction_limit=1000)
+        channels["SRA"] = AudysseyProcessor.ChannelInfo(crossover=80,
+                                                        corrections=corrections_rear, correction_limit=20000)
+        channels["SLA"] = AudysseyProcessor.ChannelInfo(crossover=80,
+                                                        corrections=corrections_rear, correction_limit=20000)
         channels["SW1"] = AudysseyProcessor.ChannelInfo(level=3.0)
 
         return channels
@@ -94,6 +100,8 @@ class AudysseyProcessor:
                 if mod_data.midrange_comp is not None:
                     input_channel["midrangeCompensation"] = str(mod_data.midrange_comp)
 
+                if mod_data.correction_limit is not None:
+                    input_channel["frequencyRangeRolloff"] = "%.1f" % mod_data.correction_limit
         # write
         with open(output_file_path, "w+") as output:
             json.dump(obj=data, fp=output, indent='\t')
