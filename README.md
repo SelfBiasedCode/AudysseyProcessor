@@ -8,7 +8,7 @@ The following data can be edited automatically:
 * Crossover frequency in Hz. If one is given, the speaker will automatically be set to "Small".
 * Midrange Compensation Yes/No
 * Speaker level in dB
-* Correction range in Hz: This feature is implemented correctly with respect to the JSON file, but the current version of Audyssey MultEQ (1.5.2) uses it during neither im- nor export. 
+* Correction range in Hz: This feature is implemented correctly with respect to the JSON file, but requires at least version 1.6.0 of Audyssey MultEQ to work. The last confirmed previous version 1.5.2 uses it during neither im- nor export. 
 
 ## Technical Details
 MultEQ stores its data in a JSON file. The script reads this file, changes the content based on a list of replacements to make, then stores it back into a new JSON file with a new preset name. It also adds tabs for readability.
