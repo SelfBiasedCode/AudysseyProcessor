@@ -33,7 +33,7 @@ class AudysseyProcessor:
         channels = {}
 
         # insert channel data here
-        corrections_front = ["{20.0, 10.0}", "{50.0, 5.0}", "{100.0, 2.0}",  # low end
+        corrections_front = ["{20.0, 10.0}", "{50.0, 5.0}", "{100.0, 3.0}",  # low end
                              "{250.0, 2.0}",  # warmth
                              "{450.0, 0.0}", "{600.0, -1.0}", "{800.0, 0.0}",  # mids
                              "{2000.0, -3.0}", "{5000.0, 0.0}",  # sharpness
@@ -53,17 +53,17 @@ class AudysseyProcessor:
                             ]
 
         # channel assembly
-        channels["FL"] = AudysseyProcessor.ChannelInfo(crossover_hz=80, midrange_comp=False,
-                                                       corrections_list=corrections_front, correction_limit_hz=1000)
-        channels["FR"] = AudysseyProcessor.ChannelInfo(crossover_hz=80, midrange_comp=False,
-                                                       corrections_list=corrections_front, correction_limit_hz=1000)
+        channels["FL"] = AudysseyProcessor.ChannelInfo(crossover_hz=60, midrange_comp=False,
+                                                       corrections_list=corrections_front, correction_limit_hz=2000)
+        channels["FR"] = AudysseyProcessor.ChannelInfo(crossover_hz=60, midrange_comp=False,
+                                                       corrections_list=corrections_front, correction_limit_hz=2000)
         channels["C"] = AudysseyProcessor.ChannelInfo(crossover_hz=80,
                                                       corrections_list=corrections_center, correction_limit_hz=20000)
         channels["SRA"] = AudysseyProcessor.ChannelInfo(crossover_hz=100,
                                                         corrections_list=corrections_rear, correction_limit_hz=20000)
         channels["SLA"] = AudysseyProcessor.ChannelInfo(crossover_hz=100,
                                                         corrections_list=corrections_rear, correction_limit_hz=20000)
-        channels["SW1"] = AudysseyProcessor.ChannelInfo(level_db=0.5)
+        channels["SW1"] = AudysseyProcessor.ChannelInfo(level_db=1.5)
 
         return channels
 
