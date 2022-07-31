@@ -1,3 +1,6 @@
+# Audyssey files
+*.ady
+
 # PyCharm data
 .idea/
 

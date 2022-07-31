@@ -33,28 +33,36 @@ class AudysseyProcessor:
         channels = {}
 
         # insert channel data here
-        corrections_front = ["{20.0, 9.5}", "{50.0, 3.0}", "{100.0, 0.0}", "{150.0, -1.0}", "{500.0, 0.0}", "{2500.0, -5.0}", "{3600.0, -2.0}",
-                             "{6200.0, -3.0}", "{11000.0, 0.0}", "{15000.0, -2.0}"]
+        corrections_front = ["{20.0, 10.0}", "{50.0, 5.0}", "{100.0, 3.0}",  # low end
+                             "{250.0, 2.0}",  # warmth
+                             "{450.0, 0.0}", "{600.0, 1.0}", "{800.0, 0.0}",  # mids
+                             "{2000.0, -3.0}", "{5000.0, 0.0}",  # sharpness
+                             "{18000.0, -2.0}"  # high end
+                             ]
 
-        corrections_center = ["{20.0, 0.0}", "{100.0, 0.0}", "{170.0, -0.5}", "{295.0, 1.5}",
-                              "{570.0, -2.0}", "{2040.0, -1.0}", "{3565.00, -0.5}", "{6725.0, -5.0}",
-                              "{10850.0, 0.0}", "{15485.0, -3.5}"]
+        corrections_center = ["{20.0, 0.0}", "{100.0, 0.0}", "{170.0, -0.5}", "{570.0, -2.0}", "{1500.0, 0.0}",
+                              "{3565.00, -3.0}", "{6000.00, -1.0}", "{18000.0, -2.0}"]
 
-        corrections_rear = ["{20.0, 0.0}", "{100.0, 5.0}", "{200.0, 2.0}", "{400.0, 0.0}", "{650.0, 0.5}",
-                            "{1500.0, -0.5}", "{4000.0, 0.0}", "{7000.0, -4.0}", "{12000.0, -0.5}", "{20000.0, 0.0}"]
+        corrections_rear = ["{20.0, 10.0}", "{50.0, 7.0}", "{100.0, 5.0}",  # low end
+                            "{170.0, 5}", "{250.0, 5}", "{315.0, 2}",  # warmth
+                            "{450.0, -4.0}", "{600.0, -5.0}",  # mids
+                            "{1000.0, -7.0}", "{2500.0, -7.0}",  # radio
+                            "{5000.0, -1.5}",  # sharpness
+                            "{18000.0, -2.0}"  # high end
+                            ]
 
         # channel assembly
         channels["FL"] = AudysseyProcessor.ChannelInfo(crossover_hz=80, midrange_comp=False,
-                                                       corrections_list=corrections_front, correction_limit_hz=1000)
+                                                       corrections_list=corrections_front, correction_limit_hz=2000)
         channels["FR"] = AudysseyProcessor.ChannelInfo(crossover_hz=80, midrange_comp=False,
-                                                       corrections_list=corrections_front, correction_limit_hz=1000)
+                                                       corrections_list=corrections_front, correction_limit_hz=2000)
         channels["C"] = AudysseyProcessor.ChannelInfo(crossover_hz=80,
-                                                      corrections_list=corrections_center, correction_limit_hz=1000)
-        channels["SRA"] = AudysseyProcessor.ChannelInfo(crossover_hz=80,
+                                                      corrections_list=corrections_center, correction_limit_hz=20000)
+        channels["SRA"] = AudysseyProcessor.ChannelInfo(crossover_hz=90, midrange_comp=False,
                                                         corrections_list=corrections_rear, correction_limit_hz=20000)
-        channels["SLA"] = AudysseyProcessor.ChannelInfo(crossover_hz=80,
+        channels["SLA"] = AudysseyProcessor.ChannelInfo(crossover_hz=90, midrange_comp=False,
                                                         corrections_list=corrections_rear, correction_limit_hz=20000)
-        channels["SW1"] = AudysseyProcessor.ChannelInfo(level_db=3.0)
+        channels["SW1"] = AudysseyProcessor.ChannelInfo(level_db=2.5)
 
         return channels
 
