@@ -22,11 +22,12 @@ from docopt import docopt
 
 class AudysseyProcessor:
     class ChannelInfo:
-        def __init__(self, crossover_hz: int = None, level_db: float = None,
+        def __init__(self, crossover_hz: int = None, level_db: float = None, trim_db: float = None,
                      corrections_list=None,
                      midrange_comp: bool = None, correction_limit_hz: int = None):
             self.crossover_hz = crossover_hz
             self.level_db = level_db
+            self.trim_db = trim_db
             self.corrections_list = corrections_list
             self.midrange_comp = midrange_comp
             self.correction_limit_hz = correction_limit_hz
@@ -108,6 +109,9 @@ class AudysseyProcessor:
 
                     if mod_data.level_db is not None:
                         input_channel["customLevel"] = str(mod_data.level_db)
+
+                    if mod_data.trim_db is not None:
+                        input_channel["trimAdjustment"] = str(mod_data.trim_db)
 
                     if mod_data.crossover_hz is not None:
                         input_channel["customCrossover"] = str(mod_data.crossover_hz)
