@@ -1,11 +1,12 @@
 """AudysseyProcessor
 
 Usage:
-  AudysseyProcessor.py --inputFile=<inputPath> --outputFile=<outputPath>
+  AudysseyProcessor.py --input_file=<inputPath> --output_file=<outputPath> [--rewrite_only]
 
 Options:
-  --inputFile=<inputPath>   The path to the input file to be processed. Will not be modified.
-  --outputFile=<outputPath> The path to the processed output file. Path will be created if necessary.
+  --input_file=<inputPath>   The path to the input file to be processed. Will not be modified.
+  --output_File=<outputPath> The path to the processed output file. Path will be created if necessary.
+  --rewrite_only  Read, add whitespaces for readability and write, but do not change any values.
   -h --help     Show this screen.
   --version     Show version.
 
@@ -66,7 +67,7 @@ class AudysseyProcessor:
 
         return channels
 
-    def run(self, input_file_path, output_file_path):
+    def run(self, input_file_path, output_file_path, rewrite_only):
         start_time = datetime.now()
 
         # extract input filename for printing
@@ -89,27 +90,28 @@ class AudysseyProcessor:
             data = json.load(infile)
 
         # process
-        data["title"] = output_file_name
-        for input_channel in data["detectedChannels"]:
-            channel_id = input_channel["commandId"]
-            if channel_id in mod_channels:
-                mod_data = mod_channels[channel_id]
+        if not rewrite_only:
+            data["title"] = output_file_name
+            for input_channel in data["detectedChannels"]:
+                channel_id = input_channel["commandId"]
+                if channel_id in mod_channels:
+                    mod_data = mod_channels[channel_id]
 
-                if mod_data.corrections_list is not None:
-                    input_channel["customTargetCurvePoints"] = mod_data.corrections_list
+                    if mod_data.corrections_list is not None:
+                        input_channel["customTargetCurvePoints"] = mod_data.corrections_list
 
-                if mod_data.level_db is not None:
-                    input_channel["customLevel"] = str(mod_data.level_db)
+                    if mod_data.level_db is not None:
+                        input_channel["customLevel"] = str(mod_data.level_db)
 
-                if mod_data.crossover_hz is not None:
-                    input_channel["customCrossover"] = str(mod_data.crossover_hz)
-                    input_channel["customSpeakerType"] = 'S'
+                    if mod_data.crossover_hz is not None:
+                        input_channel["customCrossover"] = str(mod_data.crossover_hz)
+                        input_channel["customSpeakerType"] = 'S'
 
-                if mod_data.midrange_comp is not None:
-                    input_channel["midrangeCompensation"] = str(mod_data.midrange_comp)
+                    if mod_data.midrange_comp is not None:
+                        input_channel["midrangeCompensation"] = str(mod_data.midrange_comp)
 
-                if mod_data.correction_limit_hz is not None:
-                    input_channel["frequencyRangeRolloff"] = "%.1f" % mod_data.correction_limit_hz
+                    if mod_data.correction_limit_hz is not None:
+                        input_channel["frequencyRangeRolloff"] = "%.1f" % mod_data.correction_limit_hz
         # write
         with open(output_file_path, "w+") as output:
             json.dump(obj=data, fp=output, indent='\t')
@@ -121,12 +123,13 @@ class AudysseyProcessor:
 
 def get_args():
     arguments = docopt(__doc__)
-    input_file = arguments["--inputFile"]
-    output_file = arguments["--outputFile"]
-    return input_file, output_file
+    input_file = arguments["--input_file"]
+    output_file = arguments["--output_file"]
+    rewrite_only = arguments["--rewrite_only"]
+    return input_file, output_file, rewrite_only
 
 
 if __name__ == '__main__':
     instance = AudysseyProcessor()
-    args = get_args()
-    instance.run(input_file_path=args[0], output_file_path=args[1])
+    input_file, output_file, rewrite_only = get_args()
+    instance.run(input_file_path=input_file, output_file_path=output_file, rewrite_only=rewrite_only)
