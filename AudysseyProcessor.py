@@ -1,13 +1,14 @@
 """AudysseyProcessor
 
 Usage:
-  AudysseyProcessor.py --input_file=<inputPath> --output_file=<outputPath> [--rewrite_only] [--remove_noncustom]
+  AudysseyProcessor.py --input_file=<inputPath> --output_file=<outputPath> [--rewrite_only] [--remove_noncustom] [--normalize]
 
 Options:
   --input_file=<inputPath>   The path to the input file to be processed. Will not be modified.
   --output_File=<outputPath> The path to the processed output file. Path will be created if necessary.
   --rewrite_only  Read, add whitespaces for readability and write, but do not change any values.
   --remove_noncustom  Remove all channels that are not explicitly listed in this script.
+  --normalize  Normalize output gains of all channels.
   -h --help     Show this screen.
   --version     Show version.
 
