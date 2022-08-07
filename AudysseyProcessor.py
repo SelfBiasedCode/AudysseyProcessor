@@ -1,11 +1,13 @@
 """AudysseyProcessor
 
 Usage:
-  AudysseyProcessor.py --inputFile=<inputPath> --outputFile=<outputPath>
+  AudysseyProcessor.py --input_file=<inputPath> --output_file=<outputPath> [--rewrite_only] [--remove_noncustom]
 
 Options:
-  --inputFile=<inputPath>   The path to the input file to be processed. Will not be modified.
-  --outputFile=<outputPath> The path to the processed output file. Path will be created if necessary.
+  --input_file=<inputPath>   The path to the input file to be processed. Will not be modified.
+  --output_File=<outputPath> The path to the processed output file. Path will be created if necessary.
+  --rewrite_only  Read, add whitespaces for readability and write, but do not change any values.
+  --remove_noncustom  Remove all channels that are not explicitly listed in this script.
   -h --help     Show this screen.
   --version     Show version.
 
@@ -20,10 +22,12 @@ from docopt import docopt
 
 class AudysseyProcessor:
     class ChannelInfo:
-        def __init__(self, crossover_hz=None, level_db=None, corrections_list=None, midrange_comp=None,
-                     correction_limit_hz=None):
+        def __init__(self, crossover_hz: int = None, level_db: float = None, trim_db: float = None,
+                     corrections_list=None,
+                     midrange_comp: bool = None, correction_limit_hz: int = None):
             self.crossover_hz = crossover_hz
             self.level_db = level_db
+            self.trim_db = trim_db
             self.corrections_list = corrections_list
             self.midrange_comp = midrange_comp
             self.correction_limit_hz = correction_limit_hz
@@ -33,32 +37,40 @@ class AudysseyProcessor:
         channels = {}
 
         # insert channel data here
-        corrections_front = ["{20.0, 9.5}", "{50.0, 3.0}", "{100.0, 0.0}", "{150.0, -1.0}", "{500.0, 0.0}", "{2500.0, -5.0}", "{3600.0, -2.0}",
-                             "{6200.0, -3.0}", "{11000.0, 0.0}", "{15000.0, -2.0}"]
+        corrections_front = ["{20.0, 10.0}", "{50.0, 8.0}", "{100.0, 3.0}",  # low end
+                             "{250.0, 2.0}",  # warmth
+                             "{450.0, 0.0}", "{600.0, 1.0}", "{800.0, 0.0}",  # mids
+                             "{2000.0, -3.0}", "{5000.0, 0.0}",  # sharpness
+                             "{18000.0, -2.0}"  # high end
+                             ]
 
-        corrections_center = ["{20.0, 0.0}", "{100.0, 0.0}", "{170.0, -0.5}", "{295.0, 1.5}",
-                              "{570.0, -2.0}", "{2040.0, -1.0}", "{3565.00, -0.5}", "{6725.0, -5.0}",
-                              "{10850.0, 0.0}", "{15485.0, -3.5}"]
+        corrections_center = ["{20.0, 0.0}", "{100.0, 0.0}", "{170.0, -0.5}", "{570.0, -2.0}", "{1500.0, 0.0}",
+                              "{3565.00, -3.0}", "{6000.00, -1.0}", "{18000.0, -2.0}"]
 
-        corrections_rear = ["{20.0, 0.0}", "{100.0, 5.0}", "{200.0, 2.0}", "{400.0, 0.0}", "{650.0, 0.5}",
-                            "{1500.0, -0.5}", "{4000.0, 0.0}", "{7000.0, -4.0}", "{12000.0, -0.5}", "{20000.0, 0.0}"]
+        corrections_rear = ["{20.0, 10.0}", "{50.0, 7.0}", "{100.0, 5.0}",  # low end
+                            "{170.0, 5}", "{250.0, 5}", "{315.0, 2}",  # warmth
+                            "{450.0, -4.0}", "{600.0, -5.0}",  # mids
+                            "{1000.0, -7.0}", "{2500.0, -7.0}",  # radio
+                            "{5000.0, -1.5}",  # sharpness
+                            "{18000.0, -2.0}"  # high end
+                            ]
 
         # channel assembly
         channels["FL"] = AudysseyProcessor.ChannelInfo(crossover_hz=80, midrange_comp=False,
-                                                       corrections_list=corrections_front, correction_limit_hz=1000)
+                                                       corrections_list=corrections_front, correction_limit_hz=2000)
         channels["FR"] = AudysseyProcessor.ChannelInfo(crossover_hz=80, midrange_comp=False,
-                                                       corrections_list=corrections_front, correction_limit_hz=1000)
+                                                       corrections_list=corrections_front, correction_limit_hz=2000)
         channels["C"] = AudysseyProcessor.ChannelInfo(crossover_hz=80,
-                                                      corrections_list=corrections_center, correction_limit_hz=1000)
-        channels["SRA"] = AudysseyProcessor.ChannelInfo(crossover_hz=80,
+                                                      corrections_list=corrections_center, correction_limit_hz=20000)
+        channels["SRA"] = AudysseyProcessor.ChannelInfo(crossover_hz=90, midrange_comp=False,
                                                         corrections_list=corrections_rear, correction_limit_hz=20000)
-        channels["SLA"] = AudysseyProcessor.ChannelInfo(crossover_hz=80,
+        channels["SLA"] = AudysseyProcessor.ChannelInfo(crossover_hz=90, midrange_comp=False,
                                                         corrections_list=corrections_rear, correction_limit_hz=20000)
-        channels["SW1"] = AudysseyProcessor.ChannelInfo(level_db=3.0)
+        # channels["SW1"] = AudysseyProcessor.ChannelInfo(level_db=2.5)
 
         return channels
 
-    def run(self, input_file_path, output_file_path):
+    def run(self, input_file_path: str, output_file_path: str, rewrite_only: bool, remove_noncustom: bool):
         start_time = datetime.now()
 
         # extract input filename for printing
@@ -81,27 +93,35 @@ class AudysseyProcessor:
             data = json.load(infile)
 
         # process
-        data["title"] = output_file_name
-        for input_channel in data["detectedChannels"]:
-            channel_id = input_channel["commandId"]
-            if channel_id in mod_channels:
-                mod_data = mod_channels[channel_id]
+        if not rewrite_only:
+            data["title"] = output_file_name
+            # filter list if required
+            if remove_noncustom:
+                data["detectedChannels"][:] = [channel for channel in data["detectedChannels"]
+                                               if channel["commandId"] in mod_channels]
+            for input_channel in data["detectedChannels"]:
+                channel_id = input_channel["commandId"]
+                if channel_id in mod_channels:
+                    mod_data = mod_channels[channel_id]
 
-                if mod_data.corrections_list is not None:
-                    input_channel["customTargetCurvePoints"] = mod_data.corrections_list
+                    if mod_data.corrections_list is not None:
+                        input_channel["customTargetCurvePoints"] = mod_data.corrections_list
 
-                if mod_data.level_db is not None:
-                    input_channel["customLevel"] = str(mod_data.level_db)
+                    if mod_data.level_db is not None:
+                        input_channel["customLevel"] = str(mod_data.level_db)
 
-                if mod_data.crossover_hz is not None:
-                    input_channel["customCrossover"] = str(mod_data.crossover_hz)
-                    input_channel["customSpeakerType"] = 'S'
+                    if mod_data.trim_db is not None:
+                        input_channel["trimAdjustment"] = str(mod_data.trim_db)
 
-                if mod_data.midrange_comp is not None:
-                    input_channel["midrangeCompensation"] = str(mod_data.midrange_comp)
+                    if mod_data.crossover_hz is not None:
+                        input_channel["customCrossover"] = str(mod_data.crossover_hz)
+                        input_channel["customSpeakerType"] = 'S'
 
-                if mod_data.correction_limit_hz is not None:
-                    input_channel["frequencyRangeRolloff"] = "%.1f" % mod_data.correction_limit_hz
+                    if mod_data.midrange_comp is not None:
+                        input_channel["midrangeCompensation"] = str(mod_data.midrange_comp)
+
+                    if mod_data.correction_limit_hz is not None:
+                        input_channel["frequencyRangeRolloff"] = "%.1f" % mod_data.correction_limit_hz
         # write
         with open(output_file_path, "w+") as output:
             json.dump(obj=data, fp=output, indent='\t')
@@ -113,12 +133,15 @@ class AudysseyProcessor:
 
 def get_args():
     arguments = docopt(__doc__)
-    input_file = arguments["--inputFile"]
-    output_file = arguments["--outputFile"]
-    return input_file, output_file
+    input_file = arguments["--input_file"]
+    output_file = arguments["--output_file"]
+    rewrite_only = arguments["--rewrite_only"]
+    remove_noncustom = arguments["--remove_noncustom"]
+    return input_file, output_file, rewrite_only, remove_noncustom
 
 
 if __name__ == '__main__':
     instance = AudysseyProcessor()
-    args = get_args()
-    instance.run(input_file_path=args[0], output_file_path=args[1])
+    input_file, output_file, rewrite_only, remove_noncustom = get_args()
+    instance.run(input_file_path=input_file, output_file_path=output_file, rewrite_only=rewrite_only,
+                 remove_noncustom=remove_noncustom)
