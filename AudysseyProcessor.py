@@ -1,12 +1,13 @@
 """AudysseyProcessor
 
 Usage:
-  AudysseyProcessor.py --input_file=<inputPath> --output_file=<outputPath> [--rewrite_only]
+  AudysseyProcessor.py --input_file=<inputPath> --output_file=<outputPath> [--rewrite_only] [--remove_noncustom]
 
 Options:
   --input_file=<inputPath>   The path to the input file to be processed. Will not be modified.
   --output_File=<outputPath> The path to the processed output file. Path will be created if necessary.
   --rewrite_only  Read, add whitespaces for readability and write, but do not change any values.
+  --remove_noncustom  Remove all channels that are not explicitly listed in this script.
   -h --help     Show this screen.
   --version     Show version.
 
@@ -21,8 +22,9 @@ from docopt import docopt
 
 class AudysseyProcessor:
     class ChannelInfo:
-        def __init__(self, crossover_hz=None, level_db=None, corrections_list=None, midrange_comp=None,
-                     correction_limit_hz=None):
+        def __init__(self, crossover_hz: int = None, level_db: float = None,
+                     corrections_list=None,
+                     midrange_comp: bool = None, correction_limit_hz: int = None):
             self.crossover_hz = crossover_hz
             self.level_db = level_db
             self.corrections_list = corrections_list
@@ -34,7 +36,7 @@ class AudysseyProcessor:
         channels = {}
 
         # insert channel data here
-        corrections_front = ["{20.0, 10.0}", "{50.0, 5.0}", "{100.0, 3.0}",  # low end
+        corrections_front = ["{20.0, 10.0}", "{50.0, 8.0}", "{100.0, 3.0}",  # low end
                              "{250.0, 2.0}",  # warmth
                              "{450.0, 0.0}", "{600.0, 1.0}", "{800.0, 0.0}",  # mids
                              "{2000.0, -3.0}", "{5000.0, 0.0}",  # sharpness
@@ -63,11 +65,11 @@ class AudysseyProcessor:
                                                         corrections_list=corrections_rear, correction_limit_hz=20000)
         channels["SLA"] = AudysseyProcessor.ChannelInfo(crossover_hz=90, midrange_comp=False,
                                                         corrections_list=corrections_rear, correction_limit_hz=20000)
-        channels["SW1"] = AudysseyProcessor.ChannelInfo(level_db=2.5)
+        # channels["SW1"] = AudysseyProcessor.ChannelInfo(level_db=2.5)
 
         return channels
 
-    def run(self, input_file_path, output_file_path, rewrite_only):
+    def run(self, input_file_path: str, output_file_path: str, rewrite_only: bool, remove_noncustom: bool):
         start_time = datetime.now()
 
         # extract input filename for printing
@@ -92,6 +94,10 @@ class AudysseyProcessor:
         # process
         if not rewrite_only:
             data["title"] = output_file_name
+            # filter list if required
+            if remove_noncustom:
+                data["detectedChannels"][:] = [channel for channel in data["detectedChannels"]
+                                               if channel["commandId"] in mod_channels]
             for input_channel in data["detectedChannels"]:
                 channel_id = input_channel["commandId"]
                 if channel_id in mod_channels:
@@ -126,10 +132,12 @@ def get_args():
     input_file = arguments["--input_file"]
     output_file = arguments["--output_file"]
     rewrite_only = arguments["--rewrite_only"]
-    return input_file, output_file, rewrite_only
+    remove_noncustom = arguments["--remove_noncustom"]
+    return input_file, output_file, rewrite_only, remove_noncustom
 
 
 if __name__ == '__main__':
     instance = AudysseyProcessor()
-    input_file, output_file, rewrite_only = get_args()
-    instance.run(input_file_path=input_file, output_file_path=output_file, rewrite_only=rewrite_only)
+    input_file, output_file, rewrite_only, remove_noncustom = get_args()
+    instance.run(input_file_path=input_file, output_file_path=output_file, rewrite_only=rewrite_only,
+                 remove_noncustom=remove_noncustom)
